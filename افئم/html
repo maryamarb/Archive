@@ -198,3 +198,46 @@ async function fetchGlobalTime() {
 </div>
 </body>
 </html>
+
+
+--------------------------------
+async function fetchGlobalTime() {
+    const servers = [
+        'http://worldtimeapi.org/api/timezone/Asia/Tehran', // سرور اول
+        'https://timeapi.io/api/TimeZone/zone?timeZone=Asia/Tehran' // سرور دوم
+    ];
+
+    for (const server of servers) {
+        try {
+            const response = await fetch(server);
+            if (!response.ok) {
+                throw new Error(`خطا در دریافت زمان از سرور: ${server}`);
+            }
+            const data = await response.json();
+
+            // استخراج زمان و تاریخ
+            let dateTime;
+            if (server.includes('worldtimeapi')) {
+                dateTime = new Date(data.datetime); // WorldTimeAPI
+            } else if (server.includes('timeapi.io')) {
+                dateTime = new Date(data.currentLocalTime); // TimeAPI
+            }
+
+            // تغییر فرمت زمان: حذف ثانیه
+            const options = { hour: '2-digit', minute: '2-digit', hour12: false }; // فقط ساعت و دقیقه
+            const timeString = dateTime.toLocaleTimeString('fa-IR', options); // ساعت به فرمت فارسی
+            const dateString = dateTime.toLocaleDateString('fa-IR'); // تاریخ به فرمت فارسی
+
+            // نمایش زمان و تاریخ در صفحه
+            document.getElementById("Current_Time").textContent = timeString;
+            document.getElementById("Current_Date").textContent = dateString;
+            return; // اگر موفق بود، از حلقه خارج شو
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    // اگر همه سرورها ارتباط نداشتن
+    document.getElementById("Current_Time").textContent = "خطای اتصال";
+    document.getElementById("Current_Date").textContent = "خطای اتصال";
+}
