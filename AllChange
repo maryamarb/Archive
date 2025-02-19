@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang='fa'>
+<head>
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<title>Nian Electronic</title>
+<style type='text/css'>
+body {font: 100%/1.4 Tahoma, Geneva, sans-serif;background: #273965;margin: 0;padding: 0;color: #FFF;}
+.container {width: 90%;max-width: 800px;min-width: 300px;background: #FFF;margin: 0 auto;padding: 20px;box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);border-radius: 12px;}
+.header {width: 100%;background: #4f6d9f;text-align: center;color: #FFF;border-radius: 12px 12px 0 0;margin-bottom: 20px;}
+.header h1 {margin: 0;padding: 20px;}
+.content {font-size: 15px;text-align: left; color: #000;}
+input[type='button'], input[type='checkbox'], select {font-weight: bold;padding: 10px 20px;border-radius: 12px;border: 1px solid #4CAF50;cursor: pointer;margin: 5px;background-color: #4CAF50; color: #FFF;}
+input[type='button']:hover {background-color: #45a049;}
+input[type='button'].toggled {background-color: #0000FF;}
+select {background-color: #FFF;border: 1px solid #4CAF50;color: #000;}
+.footer {padding: 10px 0;font-size: 12px;background: #4f6d9f;color: #FFF;text-align: center;border-radius: 0 0 12px 12px;margin-top: 20px;}
+.tables-container {display: flex;justify-content: center;gap: 20px;flex-wrap: wrap;}
+#controlPanelSystem {width: 100%;background-color: #4CAF50;color: #FFF;font-weight: bold;text-align: center;padding: 10px;border-radius: 12px;}
+.status {font-size: 18px;font-weight: bold;margin-top: 10px; color: #FFF;}
+.status-off {background-color: #FF0000;}
+.status-on {background-color: #4CAF50;}
+.time-settings {
+    margin-top: 10px;
+    font-size: 16px;
+}
+    .time-settings label {
+    margin-left: 10px;
+}
+#progress-bar {width: 100%; background-color: #f3f3f3; border-radius: 12px; overflow: hidden; cursor: pointer; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); height: 40px;}
+#progress-bar-fill {height: 100%; width: 0; background-color: #4CAF50; text-align: center; line-height: 40px; color: white; transition: width 0.3s ease; font-weight: bold; font-size: 1.2em;}
+#progress-bar.locked {pointer-events: none; opacity: 0.6;}
+
+/* استایل جدید برای باکس رادیو باتن‌ها */
+/* .radio-box {
+    background-color: #f9f9f9;
+  /*  border: 3px solid #4f6d9f;
+    border-radius: 12px;
+    padding: 15px;
+    margin-top  : 10px;
+    margin-bottom: 10px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+ } */
+ /*
+.radio-box label {
+    margin: 0 10px;
+    font-size: 16px;
+    color: #000;
+} */
+</style>
+</head>
+<body>
+<div class='container'>
+<div class='header'>
+<h1>Nian Electronic</h1>
+</div>
+<div class='content'>
+<div class='tables-container'>
+<table width='60%' border='3' align='center' bordercolor='#4f6d9f' cellspacing='10' style='text-align:center;border-radius:12px;'>
+<tr style='color:black;font-weight:bold;font-size:18px;'>
+<td><select id='temperatureSelect' onchange='handleTemperatureChange()'></select></td>
+<td><input type='checkbox' id='autoMode' name='autoMode' onchange='handleCheckboxChange()'> اتوماتیک</td>
+</tr>
+</table>
+<table width='100%' border='3' align='center' bordercolor='#4f6d9f' cellspacing='10' style='text-align:center;border-radius:12px;'>
+<tr style='color:black;font-weight:bold;font-size:18px;'>
+    <td><input type='checkbox' id='autoOnMode' name='autoOnMode' onchange=' handleOnTimeCheckboxChange()'> روشن </td>
+    <td><input type="text" id="on_hour" placeholder="00:00" disabled pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" oninput="validateTime(this)"></td>
+    <td><input type='checkbox' id='autoOffMode' name='autoOffMode' onchange=' handleOffTimeCheckboxChange()'> خاموش </td>
+    <td><input type="text" id="off_hour" placeholder="00:00" disabled pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" oninput="validateTime(this)"></td>
+</tr>
+</table>
+    
+<div id='progress-bar'>
+<div id='progress-bar-fill'>0%</div>
+</div>
+</div>
+<table width='100%' border='3' align='center' bordercolor='#4f6d9f' cellspacing='10' style='text-align:center; margin-top: 20px; border-radius: 12px;'>
+<tr id='controlPanelSystem'>
+<td colspan='3'>Control Panel System</td>
+</tr>
+<tr align='center' style='color:black;font-weight:bold;font-size:25px'>
+<td><input type='button' name='Lock_button' id='Lock_button' value='Lock' onclick='toggle_Button_Lock()' /></td>
+<td><input type='button' name='Pump_button' id='Pump_button' value='Pump' onclick='toggle_Button_Pump()' /></td>
+<td><input type='button' name='Power_button' id='Power_button' value='Power' onclick='toggle_Button_Power()' /></td>
+</tr>
+</table>
+
+<!-- باکس رادیو باتن‌ها
+ <div class="radio-box">
+<table width='100%' border='3' align='center' bordercolor='#4f6d9f' cellspacing='10' style='text-align:center; margin-top: 20px; border-radius: 12px;'>
+    <tr style='color:black;font-weight:bold;font-size:18px;'>
+        <td>    <input type="radio" name="ConnectionByInternet" value="1" checked> Global Connection</td>
+        <td>   <input type="radio" name="ConnectionByInternet" value="0"> Local Connection</td>
+    </tr>
+</table>    
+</div>-->
+<table width='60%' border='3' align='center' bordercolor='#4f6d9f' cellspacing='10' style='text-align:center; margin-top: 20px;border-radius:12px;'>
+    <tr style='color:black;font-weight:bold;font-size:18px;'>
+        <td><input type='checkbox' id='ConnectionByInternet' name='ConnectionByInternet' onchange='handleConnectionCheckboxChange()'> اتصال از طریق اینترنت</td>
+    </tr>
+    </table>
+<!-- جدول Status -->
+<table width='100%' border='3' align='center' bordercolor='#4f6d9f' cellspacing='10' style='text-align:center; margin-top: 20px; border-radius: 12px;'>
+<tr id='controlPanelSystem'>
+<td colspan='2' id='Temp'> Status </td>
+</tr>
+<tr align='center' style='color:black;font-weight:bold;font-size:10px'>
+<td id='Alarm_Sts'>---</td>
+<td id='My_IP'>---</td>
+</tr>
+<tr align='center' style='color:black;font-weight:bold;font-size:10px'>
+<td id='Modem_IP'>---</td>
+<td id='My_Mac'>---</td>
+</tr>
+<tr align='center' style='color:black;font-weight:bold;font-size:10px'>
+<td id='SSID_Con'>---</td>
+<td id='Internet_Con'>---</td>
+</tr>
+<tr align='center' style='color:black;font-weight:bold;font-size:10px'>
+<td id='Server_Con'>---</td>
+<td id='Last_Con'>---</td>
+</tr>
+<tr align='center' style='color:black;font-weight:bold;font-size:10px'>
+<td id='Current_Time'>---</td> <!-- جدید: قسمت نمایش زمان -->
+<td id='Current_Date'>---</td> <!-- جدید: قسمت نمایش تاریخ -->
+</tr>
+</table>
+<div class='footer'>
+<center>Copyright &copy; 2024 <a style='color:#FFF;' href='http://www.nianelectronic.com'>Nian Electronic Co.</a>Prg-Ver:A1ETP113   </center>
+</div>
+</div>
+</body>
+</html>
+<script>
+function normalizeIP(ip) {return ip.split('.').map(octet => parseInt(octet, 10)).join('.');}
+let clientIP = '192.168.001.100';
+clientIP = normalizeIP(clientIP);
+let isDragging = false;
+let progressBar, progressBarFill, autoModeCheckbox,autoOnTimechekbox,CurrentServerTime,CurrentServerDate;
+// تابع مدیریت رادیو باتن‌ها
+// function handleRadioButtonChange() {
+//     const selectedOption = document.querySelector('input[name="ConnectionByInternet"]:checked').value;
+//     if (selectedOption === "1") {
+//         console.log("گزینه ۱ انتخاب شد.");
+//         // alert("گزینه ۱ انتخاب شد.");
+//     } else if (selectedOption === "0") {
+//         console.log("گزینه ۲ انتخاب شد.");
+//         // alert("گزینه ۲ انتخاب شد.");
+//     }
+// }
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Client IP:', clientIP);
+    progressBar = document.getElementById('progress-bar');
+    progressBarFill = document.getElementById('progress-bar-fill');
+    autoModeCheckbox = document.getElementById('autoMode');
+
+    autoOnTimechekbox = document.getElementById('autoOnMode');
+    autoOnTimechekbox.addEventListener('change', function() {    document.getElementById('on_hour').disabled = !autoOnTimechekbox.checked;});
+ //   handleAutoOnHourChange();
+    autoOffTimechekbox = document.getElementById('autoOffMode');
+    autoOffTimechekbox.addEventListener('change', function() {    document.getElementById('off_hour').disabled = !autoOffTimechekbox.checked;});
+ //   handleAutoOffHourChange();
+
+    progressBar.addEventListener('mousedown', function(e) {if (!autoModeCheckbox.checked) {isDragging = true;updateProgress(e);}});
+    progressBar.addEventListener('mousemove', function(e) {if (isDragging && !autoModeCheckbox.checked) {updateProgress(e);}});
+    progressBar.addEventListener('mouseup', function() {if (!autoModeCheckbox.checked) {isDragging = false;postProgress();}});
+    progressBar.addEventListener('mouseleave', function() {if (!autoModeCheckbox.checked) {isDragging = false;}});
+    autoModeCheckbox.addEventListener('change', function() {if (autoModeCheckbox.checked) {progressBar.classList.add('locked');} else { progressBar.classList.remove('locked');}});
+    populateTemperatureSelect();
+    setTimeout(function() {updateStatus();setInterval(updateStatus, 10000); }, 5000); 
+    fetchGlobalTime();
+    setInterval(fetchGlobalTime, 1000);//هر یک ثانیه تابع دریافت زمان را اجرا میکند
+    handleCurrentTime();
+    handleCurrentDate();
+    
+    // // اضافه کردن Event Listener به رادیو باتن‌ها
+    // const radioButtons = document.querySelectorAll('input[name="ConnectionByInternet"]');
+    // radioButtons.forEach(radio => {
+    //     radio.addEventListener('change', handleRadioButtonChange);
+    // });
+});
+function postData(url = '', data = {}, callback) 
+    {var xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onreadystatechange = function(){
+        if (xhr.readyState === 4 && xhr.status === 200) 
+        {var statusData = JSON.parse(xhr.responseText);
+        if (callback) callback(xhr.responseText);} 
+        else if (xhr.readyState === 4) {console.error('Error:', xhr.status, xhr.responseText);}};
+        xhr.send(JSON.stringify(data));}
+function checkIPAndPostData(endpoint, data) {postData(`http://${clientIP}:80/${endpoint}`, data);}
+function toggleButton(buttonId) {let buttonElement = document.getElementById(buttonId);let isActive = buttonElement.classList.toggle('toggled');return isActive;}
+function toggle_Button_Lock() {let isActive = toggleButton('Lock_button');postData(`http://${clientIP}:80/Update_Parameter`, { 'Lock': isActive.toString() });}
+function toggle_Button_Pump() {let isActive = toggleButton('Pump_button');postData(`http://${clientIP}:80/Update_Parameter`, { 'Pump': isActive.toString() });}
+function toggle_Button_Power(){let isActive = toggleButton('Power_button');postData(`http://${clientIP}:80/Update_Parameter`, { 'Power': isActive.toString() });}
+function handleCheckboxChange(){let isChecked = document.getElementById('autoMode').checked;postData(`http://${clientIP}:80/Update_Parameter`, { 'AutoMode': isChecked.toString() });}
+
+function handleOnTimeCheckboxChange(){let isChecked = document.getElementById('autoOnTime').checked;postData(`http://${clientIP}:80/Update_Parameter`, { 'AutoOnTime': isChecked.toString() });}
+function handleOffTimeCheckboxChange(){let isChecked = document.getElementById('autoOffTime').checked;postData(`http://${clientIP}:80/Update_Parameter`, { 'AutoOffTime': isChecked.toString() });}
+
+function handleAutoOnHourChange(){let OnHour = document.getElementById('OnHour').value;postData(`http://${clientIP}:80/Update_Parameter`, { 'OnHour': OnHour.toString() });}
+function handleAutoOffHourChange(){let OffHour = document.getElementById('OffHour').value;postData(`http://${clientIP}:80/Update_Parameter`, { 'OffHour': OffHour.toString() });}
+
+function handleTemperatureChange(){let temperature = document.getElementById('temperatureSelect').value;postData(`http://${clientIP}:80/Update_Parameter`, { 'Temp': temperature.toString() });}
+function updateProgress(e){const progressBarRect = progressBar.getBoundingClientRect();const offsetX = e.clientX - progressBarRect.left;const progressPercent = Math.max(0, Math.min(100, (offsetX / progressBarRect.width) * 100));
+    progressBarFill.style.width = progressPercent + '%';
+    progressBarFill.textContent = Math.round(progressPercent) + '%';}
+function postProgress() {const progressValue = parseInt(progressBarFill.textContent, 10);postData(`http://${clientIP}:80/Update_Parameter`, { 'Speed': progressValue.toString() });}
+function populateTemperatureSelect() {let select = document.getElementById('temperatureSelect');for (let i = 18; i < 30; i++) {let option = document.createElement('option');option.value = i;option.text = i + '°C';select.add(option);}}
+
+function handleConnectionCheckboxChange(){let isChecked = document.getElementById('ConnectionByInternet').checked;postData(`http://${clientIP}:80/Update_Parameter`, { 'ConnectionByInternet': isChecked.toString() });}
+
+function handleCurrentTime(){let CurrentTime = document.getElementById('Current_Time').textContent ;if (CurrentTime !== CurrentServerTime) {postData(`http://${clientIP}:80/Update_Parameter`, { 'CurrentTime': CurrentServerTime.toString() });}}
+function handleCurrentDate(){let CurrentDate = document.getElementById('Current_Date').textContent ;if(CurrentDate !== CurrentServerDate){postData(`http://${clientIP}:80/Update_Parameter`, { 'CurentDate': CurrentServerDate.toString() });}}
+
+function validateTime(input) { 
+    const timePattern = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    if (!timePattern.test(input.value)) {
+        input.style.borderColor = 'red';
+        input.setCustomValidity('فرمت صحیح ساعت: 00:00');
+    } else {
+        input.style.borderColor = '';
+        input.setCustomValidity('');
+    }
+    handleAutoOnHourChange();
+    handleAutoOffHourChange();
+
+}
+function updateStatus() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', `http://${clientIP}:80/status`, true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var statusData = JSON.parse(xhr.responseText);
+            document.getElementById('Alarm_Sts').textContent = statusData.value1;
+            document.getElementById('My_IP').textContent = statusData.value2;
+            document.getElementById('Modem_IP').textContent = statusData.value3;
+            document.getElementById('My_Mac').textContent = statusData.value4;
+            document.getElementById('SSID_Con').textContent = statusData.value5;
+            document.getElementById('Internet_Con').textContent = statusData.value6;
+            document.getElementById('Server_Con').textContent = statusData.value7;
+            document.getElementById('Last_Con').textContent = statusData.value8;
+            document.getElementById('Temp').textContent = statusData.value9;
+            document.getElementById('Current_Time').textContent = statusData.time;
+            document.getElementById('Current_Date').textContent = statusData.Date;            
+            const temperatureSelect = document.getElementById('temperatureSelect');
+            const progressBarFill = document.getElementById('progress-bar-fill');
+            temperatureSelect.value = statusData.temperature;
+            progressBarFill.style.width = statusData.progressBar + '%';
+            progressBarFill.textContent = statusData.progressBar + '%';   
+
+            const AutoOnHour = document.getElementById('on_hour');
+            const AutoOffHour = document.getElementById('off_hour');
+            AutoOnHour.value = statusData.AutoOnTime;
+            AutoOffHour.value= statusData.AutoOffTime;
+        }
+    };
+    xhr.send();
+}
+
+async function fetchGlobalTime() {
+    const servers = [
+        'http://worldtimeapi.org/api/timezone/Asia/Tehran',
+        'https://timeapi.io/api/TimeZone/zone?timeZone=Asia/Tehran'
+    ];
+
+    let timeFetched = false;
+
+    for (const server of servers) {
+        try {
+            const response = await fetch(server);
+            if (!response.ok) {
+                throw new Error(`خطا در دریافت زمان از سرور: ${server}`);
+            }
+            const data = await response.json();
+
+            let dateTime;
+            if (server.includes('worldtimeapi')) {
+                dateTime = new Date(data.datetime);
+            } else if (server.includes('timeapi.io')) {
+                dateTime = new Date(data.currentLocalTime);
+            }
+
+            const options = { hour: '2-digit', minute: '2-digit', hour12: false };
+            const timeString = dateTime.toLocaleTimeString('fa-IR', options);
+            const dateString = dateTime.toLocaleDateString('fa-IR');
+
+            // document.getElementById('Current_Time').textContent = timeString;
+            // document.getElementById('Current_Date').textContent = dateString;
+            CurrentServerTime = timeString;
+            CurrentServerDate = dateString;
+            timeFetched = true;
+            return;
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    // اگر همه سرورها ارتباط نداشتن، از زمان محلی استفاده کن
+    if (!timeFetched) {
+        const localDateTime = new Date();
+        const options = { hour: '2-digit', minute: '2-digit', hour12: false }; // فقط ساعت و دقیقه
+        const localTimeString = localDateTime.toLocaleTimeString('fa-IR', options); // ساعت به فرمت فارسی
+        const localDateString = localDateTime.toLocaleDateString('fa-IR'); // تاریخ به فرمت فارسی
+
+        // document.getElementById('Current_Time').textContent = localTimeString;
+        // document.getElementById('Current_Date').textContent = localDateString;
+        CurrentServerTime = localTimeString;
+        CurrentServerDate = localDateString;
+    }
+}
+</script>
+</div>
+</body>
+</html>
