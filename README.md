@@ -1,200 +1,611 @@
-# Archive
-<!DOCTYPE html>
-<html lang='fa'>
-<head>
-<meta charset='UTF-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0'>
-<title>Nian Electronic</title>
-<style type='text/css'>
-body {font: 100%/1.4 Tahoma, Geneva, sans-serif;background: #273965;margin: 0;padding: 0;color: #FFF;}
-.container {width: 90%;max-width: 800px;min-width: 300px;background: #FFF;margin: 0 auto;padding: 20px;box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);border-radius: 12px;}
-.header {width: 100%;background: #4f6d9f;text-align: center;color: #FFF;border-radius: 12px 12px 0 0;margin-bottom: 20px;}
-.header h1 {margin: 0;padding: 20px;}
-.content {font-size: 15px;text-align: left; color: #000;}
-input[type='button'], input[type='checkbox'], select {font-weight: bold;padding: 10px 20px;border-radius: 12px;border: 1px solid #4CAF50;cursor: pointer;margin: 5px;background-color: #4CAF50; color: #FFF;}
-input[type='button']:hover {background-color: #45a049;}
-input[type='button'].toggled {background-color: #0000FF;}
-select {background-color: #FFF;border: 1px solid #4CAF50;color: #000;}
-.footer {padding: 10px 0;font-size: 12px;background: #4f6d9f;color: #FFF;text-align: center;border-radius: 0 0 12px 12px;margin-top: 20px;}
-.tables-container {display: flex;justify-content: center;gap: 20px;flex-wrap: wrap;}
-#controlPanelSystem {width: 100%;background-color: #4CAF50;color: #FFF;font-weight: bold;text-align: center;padding: 10px;border-radius: 12px;}
-.status {font-size: 18px;font-weight: bold;margin-top: 10px; color: #FFF;}
-.status-off {background-color: #FF0000;}
-.status-on {background-color: #4CAF50;}
-#progress-bar {width: 100%; background-color: #f3f3f3; border-radius: 12px; overflow: hidden; cursor: pointer; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); height: 40px;}
-#progress-bar-fill {height: 100%; width: 0; background-color: #4CAF50; text-align: center; line-height: 40px; color: white; transition: width 0.3s ease; font-weight: bold; font-size: 1.2em;}
-#progress-bar.locked {pointer-events: none; opacity: 0.6;}
-</style>
-</head>
-<body>
-<div class='container'>
-<div class='header'>
-<h1>Nian Electronic</h1>
-</div>
-<div class='content'>
-<div class='tables-container'>
-<table width='60%' border='3' align='center' bordercolor='#4f6d9f' cellspacing='10' style='text-align:center;border-radius:12px;'>
-<tr style='color:black;font-weight:bold;font-size:18px;'>
-<td><select id='temperatureSelect' onchange='handleTemperatureChange()'></select></td>
-<td><input type='checkbox' id='autoMode' name='autoMode' onchange='handleCheckboxChange()'> اتوماتیک</td>
-</tr>
-</table>
-<div id='progress-bar'>
-<div id='progress-bar-fill'>0%</div>
-</div>
-</div>
-<table width='100%' border='3' align='center' bordercolor='#4f6d9f' cellspacing='10' style='text-align:center; margin-top: 20px; border-radius: 12px;'>
-<tr id='controlPanelSystem'>
-<td colspan='3'>Control Panel System</td>
-</tr>
-<tr align='center' style='color:black;font-weight:bold;font-size:25px'>
-<td><input type='button' name='Lock_button' id='Lock_button' value='Lock' onclick='toggle_Button_Lock()' /></td>
-<td><input type='button' name='Pump_button' id='Pump_button' value='Pump' onclick='toggle_Button_Pump()' /></td>
-<td><input type='button' name='Power_button' id='Power_button' value='Power' onclick='toggle_Button_Power()' /></td>
-</tr>
-</table>
-</div>
-<table width='100%' border='3' align='center' bordercolor='#4f6d9f' cellspacing='10' style='text-align:center; margin-top: 20px; border-radius: 12px;'>
-<tr id='controlPanelSystem'>
-<td colspan='2' id='Temp'> Status </td>
-</tr>
-<tr align='center' style='color:black;font-weight:bold;font-size:10px'>
-<td id='Alarm_Sts'>---</td>
-<td id='My_IP'>---</td>
-</tr>
-<tr align='center' style='color:black;font-weight:bold;font-size:10px'>
-<td id='Modem_IP'>---</td>
-<td id='My_Mac'>---</td>
-</tr>
-<tr align='center' style='color:black;font-weight:bold;font-size:10px'>
-<td id='SSID_Con'>---</td>
-<td id='Internet_Con'>---</td>
-</tr>
-<tr align='center' style='color:black;font-weight:bold;font-size:10px'>
-<td id='Server_Con'>---</td>
-<td id='Last_Con'>---</td>
-</tr>
-<tr align='center' style='color:black;font-weight:bold;font-size:10px'>
-<td id='Current_Time'>---</td> <!-- جدید: قسمت نمایش زمان -->
-<td id='Current_Date'>---</td> <!-- جدید: قسمت نمایش تاریخ -->
-</tr>
-</table>
-<div class='footer'>
-<center>Copyright &copy; 2024 <a style='color:#FFF;' href='http://www.nianelectronic.com'>Nian Electronic Co.</a>Prg-Ver:A1ETP113   </center>
-</div>
-</div>
-</body>
-</html>
-<script>
-function normalizeIP(ip) {return ip.split('.').map(octet => parseInt(octet, 10)).join('.');}
-let clientIP = '192.168.001.100';
-clientIP = normalizeIP(clientIP);
-let isDragging = false;
-let progressBar, progressBarFill, autoModeCheckbox;
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Client IP:', clientIP);
-    progressBar = document.getElementById('progress-bar');
-    progressBarFill = document.getElementById('progress-bar-fill');
-    autoModeCheckbox = document.getElementById('autoMode');
-    progressBar.addEventListener('mousedown', function(e) {if (!autoModeCheckbox.checked) {isDragging = true;updateProgress(e);}});
-    progressBar.addEventListener('mousemove', function(e) {if (isDragging && !autoModeCheckbox.checked) {updateProgress(e);}});
-    progressBar.addEventListener('mouseup', function() {if (!autoModeCheckbox.checked) {isDragging = false;postProgress();}});
-    progressBar.addEventListener('mouseleave', function() {if (!autoModeCheckbox.checked) {isDragging = false;}});
-    autoModeCheckbox.addEventListener('change', function() {if (autoModeCheckbox.checked) {progressBar.classList.add('locked');} else { progressBar.classList.remove('locked');}});
-    populateTemperatureSelect();
-    setTimeout(function() {updateStatus();setInterval(updateStatus, 10000); }, 5000); 
-    // فراخوانی تابع دریافت زمان
-    fetchGlobalTime();
-    setInterval(fetchGlobalTime, 1000);
-});
-function postData(url = '', data = {}, callback) 
-    {var xhr = new XMLHttpRequest();
-    xhr.open('POST', url, true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.onreadystatechange = function(){
-        if (xhr.readyState === 4 && xhr.status === 200) 
-        {var statusData = JSON.parse(xhr.responseText);
-        if (callback) callback(xhr.responseText);} 
-        else if (xhr.readyState === 4) {console.error('Error:', xhr.status, xhr.responseText);}};
-        xhr.send(JSON.stringify(data));}
-function checkIPAndPostData(endpoint, data) {postData(`http://${clientIP}:80/${endpoint}`, data);}
-function toggleButton(buttonId) {let buttonElement = document.getElementById(buttonId);let isActive = buttonElement.classList.toggle('toggled');return isActive;}
-function toggle_Button_Lock() {let isActive = toggleButton('Lock_button');postData(`http://${clientIP}:80/Update_Parameter`, { 'Lock': isActive.toString() });}
-function toggle_Button_Pump() {let isActive = toggleButton('Pump_button');postData(`http://${clientIP}:80/Update_Parameter`, { 'Pump': isActive.toString() });}
-function toggle_Button_Power(){let isActive = toggleButton('Power_button');postData(`http://${clientIP}:80/Update_Parameter`, { 'Power': isActive.toString() });}
-function handleCheckboxChange(){let isChecked = document.getElementById('autoMode').checked;postData(`http://${clientIP}:80/Update_Parameter`, { 'AutoMode': isChecked.toString() });}
-function handleTemperatureChange(){let temperature = document.getElementById('temperatureSelect').value;postData(`http://${clientIP}:80/Update_Parameter`, { 'Temp': temperature.toString() });}
-function updateProgress(e){const progressBarRect = progressBar.getBoundingClientRect();const offsetX = e.clientX - progressBarRect.left;const progressPercent = Math.max(0, Math.min(100, (offsetX / progressBarRect.width) * 100));
-    progressBarFill.style.width = progressPercent + '%';
-    progressBarFill.textContent = Math.round(progressPercent) + '%';}
-function postProgress() {const progressValue = parseInt(progressBarFill.textContent, 10);postData(`http://${clientIP}:80/Update_Parameter`, { 'Speed': progressValue.toString() });}
-function populateTemperatureSelect() {let select = document.getElementById('temperatureSelect');for (let i = 18; i < 30; i++) {let option = document.createElement('option');option.value = i;option.text = i + '°C';select.add(option);}}
-function updateStatus() {
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', `http://${clientIP}:80/status`, true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            var statusData = JSON.parse(xhr.responseText);
-            document.getElementById('Alarm_Sts').textContent = statusData.value1;
-            document.getElementById('My_IP').textContent = statusData.value2;
-            document.getElementById('Modem_IP').textContent = statusData.value3;
-            document.getElementById('My_Mac').textContent = statusData.value4;
-            document.getElementById('SSID_Con').textContent = statusData.value5;
-            document.getElementById('Internet_Con').textContent = statusData.value6;
-            document.getElementById('Server_Con').textContent = statusData.value7;
-            document.getElementById('Last_Con').textContent = statusData.value8;
-            document.getElementById('Temp').textContent = statusData.value9;
-            const temperatureSelect = document.getElementById('temperatureSelect');
-            const progressBarFill = document.getElementById('progress-bar-fill');
-            temperatureSelect.value = statusData.temperature;
-            progressBarFill.style.width = statusData.progressBar + '%';
-            progressBarFill.textContent = statusData.progressBar + '%';
-        }
-    };
-    xhr.send();
-}
+#include "string.h"
+extern System_Struct System;
 
-// تابع جدید برای دریافت زمان از سرور
-async function fetchGlobalTime() {
-    const servers = [
-        'http://worldtimeapi.org/api/timezone/Asia/Tehran', // سرور اول
-        'https://timeapi.io/api/TimeZone/zone?timeZone=Asia/Tehran' // سرور دوم
-    ];
 
-    for (const server of servers) {
-        try {
-            const response = await fetch(server);
-            if (!response.ok) {
-                throw new Error(`خطا در دریافت زمان از سرور: ${server}`);
-            }
-            const data = await response.json();
+const char *Home_Page =
+{
+	"<!DOCTYPE html>\r\n"
+	"<html lang='fa'>\r\n"
+	"<head>\r\n"
+	"<meta charset='UTF-8'>\r\n"
+	"<meta name='viewport' content='width=device-width, initial-scale=1.0'>\r\n"
+	"<title>Nian Electronic</title>\r\n"
+	"<style type='text/css'>\r\n"
+	"body {font: 100%/1.4 Tahoma, Geneva, sans-serif;background: #273965;margin: 0;padding: 0;color: #FFF;}\r\n"
+	".container {width: 90%;max-width: 800px;min-width: 300px;background: #FFF;margin: 0 auto;padding: 20px;box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);border-radius: 12px;}\r\n"
+	".header {width: 100%;background: #4f6d9f;text-align: center;color: #FFF;border-radius: 12px 12px 0 0;margin-bottom: 20px;}\r\n"
+	".header h1 {margin: 0;padding: 20px;}\r\n"
+	".content {font-size: 15px;text-align: left; color: #000;}\r\n"
+	"input[type='button'], input[type='checkbox'], select {font-weight: bold;padding: 10px 20px;border-radius: 12px;border: 1px solid #4CAF50;cursor: pointer;margin: 5px;background-color: #4CAF50; color: #FFF;}\r\n"
+	"input[type='button']:hover {background-color: #45a049;}\r\n"
+	"input[type='button'].toggled {background-color: #0000FF;}\r\n"
+	"select {background-color: #FFF;border: 1px solid #4CAF50;color: #000;}\r\n"
+	".footer {padding: 10px 0;font-size: 12px;background: #4f6d9f;color: #FFF;text-align: center;border-radius: 0 0 12px 12px;margin-top: 20px;}\r\n"
+	".tables-container {display: flex;justify-content: center;gap: 20px;flex-wrap: wrap;}\r\n"
+	"#controlPanelSystem {width: 100%;background-color: #4CAF50;color: #FFF;font-weight: bold;text-align: center;padding: 10px;border-radius: 12px;}\r\n"
+	".status {font-size: 18px;font-weight: bold;margin-top: 10px; color: #FFF;}\r\n"
+	".status-off {background-color: #FF0000;}\r\n"
+	".status-on {background-color: #4CAF50;}\r\n"
+	".time-settings {\r\n"
+	"	margin-top: 10px;\r\n"
+	"	font-size: 16px;\r\n"
+	"}\r\n"
+	"	.time-settings label {\r\n"
+	"	margin-left: 10px;\r\n"
+	"}\r\n"
+	"#progress-bar {width: 100%; background-color: #f3f3f3; border-radius: 12px; overflow: hidden; cursor: pointer; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); height: 40px;}\r\n"
+	"#progress-bar-fill {height: 100%; width: 0; background-color: #4CAF50; text-align: center; line-height: 40px; color: white; transition: width 0.3s ease; font-weight: bold; font-size: 1.2em;}\r\n"
+	"#progress-bar.locked {pointer-events: none; opacity: 0.6;}\r\n"
+    "    </style>\r\n"
+"</head>\r\n"
+};
 
-            // استخراج زمان و تاریخ
-            let dateTime;
-            if (server.includes('worldtimeapi')) {
-                dateTime = new Date(data.datetime); // WorldTimeAPI
-            } else if (server.includes('timeapi.io')) {
-                dateTime = new Date(data.currentLocalTime); // TimeAPI
-            }
+const char *Home_Page1 =
+{
+	"<body>\r\n"
+	"<div class='container'>\r\n"
+	"<div class='header'>\r\n"
+	"<h1>Nian Electronic</h1>\r\n"
+	"</div>\r\n"
+	"<div class='content'>\r\n"
+	"<div class='tables-container'>\r\n"
+	"<table width='60%' border='3' align='center' bordercolor='#4f6d9f' cellspacing='10' style='text-align:center;border-radius:12px;'>\r\n"
+	"<tr style='color:black;font-weight:bold;font-size:18px;'>\r\n"
+	"<td><select id='temperatureSelect' onchange='handleTemperatureChange()'></select></td>\r\n"
+	"<td><input type='checkbox' id='autoMode' name='autoMode' onchange='handleCheckboxChange()'> اتوماتیک</td>\r\n"
+	"</tr>\r\n"
+	"</table>\r\n"
+	"<table width='100%' border='3' align='center' bordercolor='#4f6d9f' cellspacing='10' style='text-align:center;border-radius:12px;'>\r\n"
+	"<tr style='color:black;font-weight:bold;font-size:18px;'>\r\n"
+	"	<td><input type='checkbox' id='autoOnMode' name='autoOnMode' disabled onchange=' handleOnTimeCheckboxChange()'> روشن </td>\r\n"
+	"	<td><input type='text' id='on_hour' placeholder='00:00' enabled pattern='([01]?[0-9]|2[0-3]):[0-5][0-9]' oninput='validateTime(this,1)'></td>\r\n"
+	"	<td><input type='checkbox' id='autoOffMode' name='autoOffMode' disabled onchange=' handleOffTimeCheckboxChange()'> خاموش </td>\r\n"
+	"	<td><input type='text' id='off_hour' placeholder='00:00' enabled pattern='([01]?[0-9]|2[0-3]):[0-5][0-9]' oninput='validateTime(this,0)'></td>\r\n"
+	"</tr>\r\n"
+	"</table>\r\n"
+		
+	"<div id='progress-bar'>\r\n"
+	"<div id='progress-bar-fill'>0%</div>\r\n"
+	"</div>\r\n"
+	"</div>\r\n"
+	"<table width='100%' border='3' align='center' bordercolor='#4f6d9f' cellspacing='10' style='text-align:center; margin-top: 20px; border-radius: 12px;'>\r\n"
+	"<tr id='controlPanelSystem'>\r\n"
+	"<td colspan='3'>Control Panel System</td>\r\n"
+	"</tr>\r\n"
+	"<tr align='center' style='color:black;font-weight:bold;font-size:25px'>\r\n"
+	"<td><input type='button' name='Lock_button' id='Lock_button' value='Lock' onclick='toggle_Button_Lock()' /></td>\r\n"
+	"<td><input type='button' name='Pump_button' id='Pump_button' value='Pump' onclick='toggle_Button_Pump()' /></td>\r\n"
+	"<td><input type='button' name='Power_button' id='Power_button' value='Power' onclick='toggle_Button_Power()' /></td>\r\n"
+	"</tr>\r\n"
+	"</table>\r\n"
 
-            const timeString = dateTime.toLocaleTimeString('fa-IR'); // ساعت به فرمت فارسی
-            const dateString = dateTime.toLocaleDateString('fa-IR'); // تاریخ به فرمت فارسی
 
-            // نمایش زمان و تاریخ در صفحه
-            document.getElementById("Current_Time").textContent = timeString;
-            document.getElementById("Current_Date").textContent = dateString;
-            return; // اگر موفق بود، از حلقه خارج شو
-        } catch (error) {
-            console.error(error);
-        }
-    }
+	"<table width='60%' border='3' align='center' bordercolor='#4f6d9f' cellspacing='10' style='text-align:center; margin-top: 20px;border-radius:12px;'>\r\n"
+	"	<tr style='color:black;font-weight:bold;font-size:18px;'>\r\n"
+	"		<td><input type='checkbox' id='ConnectionByInternet' name='ConnectionByInternet' onchange='handleConnectionCheckboxChange()'> اتصال از طریق اینترنت</td>\r\n"
+	"	</tr>\r\n"
+	"	</table>\r\n"
 
-    // اگر همه سرورها ارتباط نداشتن
-    document.getElementById("Current_Time").textContent = "خطای اتصال";
-    document.getElementById("Current_Date").textContent = "خطای اتصال";
-}
-</script>
-</div>
-</body>
-</html>
+	"<table width='100%' border='3' align='center' bordercolor='#4f6d9f' cellspacing='10' style='text-align:center; margin-top: 20px; border-radius: 12px;'>\r\n"
+	"<tr id='controlPanelSystem'>\r\n"
+	"<td colspan='2' id='Temp'> Status </td>\r\n"
+	"</tr>\r\n"
+	"<tr align='center' style='color:black;font-weight:bold;font-size:10px'>\r\n"
+	"<td id='Alarm_Sts'>---</td>\r\n"
+	"<td id='My_IP'>---</td>\r\n"
+	"</tr>\r\n"
+	"<tr align='center' style='color:black;font-weight:bold;font-size:10px'>\r\n"
+	"<td id='Modem_IP'>---</td>\r\n"
+	"<td id='My_Mac'>---</td>\r\n"
+	"</tr>\r\n"
+	"<tr align='center' style='color:black;font-weight:bold;font-size:10px'>\r\n"
+	"<td id='SSID_Con'>---</td>\r\n"
+	"<td id='Internet_Con'>---</td>\r\n"
+	"</tr>\r\n"
+	"<tr align='center' style='color:black;font-weight:bold;font-size:10px'>\r\n"
+	"<td id='Server_Con'>---</td>\r\n"
+	"<td id='Last_Con'>---</td>\r\n"
+	"</tr>\r\n"
+	"<tr align='center' style='color:black;font-weight:bold;font-size:10px'>\r\n"
+	"<td id='Current_Time'>---</td> \r\n"
+	"<td id='Current_Date'>---</td> \r\n"
+	"</tr>\r\n"
+	"</table>\r\n"
+	"<div class='footer'>\r\n"
+	"<center>Copyright &copy; 2024 <a style='color:#FFF;' href='http://www.nianelectronic.com'>Nian Electronic Co.</a>Prg-Ver:A1ETP113   </center>\r\n"
+	"</div>\r\n"
+	"</div>\r\n"
+	"</body>\r\n"
+	"</html>\r\n"
+	"<script>\r\n"
+	"function normalizeIP(ip) {return ip.split('.').map(octet => parseInt(octet, 10)).join('.');}\r\n"
+	"let clientIP = '192.168.001.100';\r\n"
+	"clientIP = normalizeIP(clientIP);\r\n"
+	"let isDragging = false;\r\n"
+	"let progressBar, progressBarFill, autoModeCheckbox,autoOnTimechekbox,autoOffTimechekbox,CurrentServerTime,CurrentServerDate;\r\n"
+	
+	"function validateTime(input,state) { \r\n"
+	"	const timePattern = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;\r\n"
+	"	if (!timePattern.test(input.value)) {\r\n"
+	"		input.style.borderColor = 'red';\r\n"
+    "       if(state){document.getElementById('autoOnMode').disabled = true; }\r\n"
+    "       else{document.getElementById('autoOffMode').disabled = true; }\r\n"
+	"	} else {\r\n"
+    "       if(state){document.getElementById('autoOnMode').disabled = false; }\r\n"
+    "       else{document.getElementById('autoOffMode').disabled = false; }\r\n"
+	"		input.style.borderColor = '';\r\n"
+	"	}\r\n"
+	"}\r\n"
+    
+	"document.addEventListener('DOMContentLoaded', function() {\r\n"
+	"	console.log('Client IP:', clientIP);\r\n"
+	"	progressBar = document.getElementById('progress-bar');\r\n"
+	"	progressBarFill = document.getElementById('progress-bar-fill');\r\n"
+	"	autoModeCheckbox = document.getElementById('autoMode');\r\n"
+
+
+//    "    const autoOnModeCheckbox = document.getElementById('autoOnMode');\r\n"
+//    "    const onHourInput = document.getElementById('on_hour');\r\n"
+//    "    autoOnModeCheckbox.addEventListener('change', function () { handleOnTimeCheckboxChange(); });\r\n"
+//    "    onHourInput.addEventListener('input', function () { validateTime(onHourInput); });\r\n"
+
+////	"	autoOnTimechekbox = document.getElementById('autoOnMode');\r\n"
+////    "	const on_hourInput = document.getElementById('on_hour');\r\n"
+////	"	autoOnTimechekbox.addEventListener('change', function() {  	handleAutoOnHourChange();});\r\n"
+////    "   on_hourInput.addEventListener('input', function () {\r\n"
+////    "   handleAutoOnHourChange();\r\n"
+////    "});\r\n"
+	"	autoOnTimechekbox = document.getElementById('autoOnMode');\r\n"//    isChecked = false;  document.getElementById('autoOnMode').disabled = true; 
+	"	autoOnTimechekbox.addEventListener('change', function() {    document.getElementById('on_hour').disabled = autoOnTimechekbox.checked;});\r\n"
+
+	"	autoOffTimechekbox = document.getElementById('autoOffMode');\r\n"
+	"	autoOffTimechekbox.addEventListener('change', function() {    document.getElementById('off_hour').disabled = autoOffTimechekbox.checked;});\r\n"
+
+
+	"	progressBar.addEventListener('mousedown', function(e) {if (!autoModeCheckbox.checked) {isDragging = true;updateProgress(e);}});\r\n"
+	"	progressBar.addEventListener('mousemove', function(e) {if (isDragging && !autoModeCheckbox.checked) {updateProgress(e);}});\r\n"
+	"	progressBar.addEventListener('mouseup', function() {if (!autoModeCheckbox.checked) {isDragging = false;postProgress();}});\r\n"
+	"	progressBar.addEventListener('mouseleave', function() {if (!autoModeCheckbox.checked) {isDragging = false;}});\r\n"
+	"	autoModeCheckbox.addEventListener('change', function() {if (autoModeCheckbox.checked) {progressBar.classList.add('locked');} else { progressBar.classList.remove('locked');}});\r\n"
+	"	populateTemperatureSelect();\r\n"
+        
+	"	setTimeout(function() {updateStatus();setInterval(updateStatus, 10000); }, 5000); \r\n"
+	"	fetchGlobalTime();\r\n"
+	"	setInterval(fetchGlobalTime, 10000);\r\n"
+//    "   handleOnCheckboxChange();\r\n"
+//	"	setInterval(handleOnCheckboxChange, 15000);\r\n"
+//	"	handleCurrentDate();\r\n"
+//    "	setInterval(handleCurrentDate, 10000);\r\n"
+
+	"});\r\n"
+	"function postData(url = '', data = {}, callback) \r\n"
+	"	{var xhr = new XMLHttpRequest();\r\n"
+	"	xhr.open('POST', url, true);\r\n"
+	"	xhr.setRequestHeader('Content-Type', 'application/json');\r\n"
+	"	xhr.onreadystatechange = function(){\r\n"
+	"		if (xhr.readyState === 4 && xhr.status === 200) \r\n"
+	"		{var statusData = JSON.parse(xhr.responseText);\r\n"
+	"		if (callback) callback(xhr.responseText);} \r\n"
+	"		else if (xhr.readyState === 4) {console.error('Error:', xhr.status, xhr.responseText);}};\r\n"
+	"		xhr.send(JSON.stringify(data));}\r\n"
+	"function checkIPAndPostData(endpoint, data) {postData(`http://${clientIP}:80/${endpoint}`, data);}\r\n"
+	"function toggleButton(buttonId) {let buttonElement = document.getElementById(buttonId);let isActive = buttonElement.classList.toggle('toggled');return isActive;}\r\n"
+	"function toggle_Button_Lock() {let isActive = toggleButton('Lock_button');postData(`http://${clientIP}:80/Update_Parameter`, { 'Lock': isActive.toString() });}\r\n"
+	"function toggle_Button_Pump() {let isActive = toggleButton('Pump_button');postData(`http://${clientIP}:80/Update_Parameter`, { 'Pump': isActive.toString() });}\r\n"
+	"function toggle_Button_Power(){let isActive = toggleButton('Power_button');postData(`http://${clientIP}:80/Update_Parameter`, { 'Power': isActive.toString() });}\r\n"
+	"function handleCheckboxChange(){let isChecked = document.getElementById('autoMode').checked;postData(`http://${clientIP}:80/Update_Parameter`, { 'AutoMode': isChecked.toString() });}\r\n"
+
+//	"function handleOnCheckboxChange(){let isChecked = document.getElementById('autoOnMode').checked;postData(`http://${clientIP}:80/Update_Parameter`, { 'AutoOnMode': isChecked.toString() });}\r\n"
+    "function handleOnTimeCheckboxChange() {let isChecked = document.getElementById('autoOnMode').checked;let onHourInput = document.getElementById('on_hour');if (isChecked) {\r\n"
+    "        const timePattern = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;\r\n"
+    "        if (timePattern.test(onHourInput.value)){postData(`http://${clientIP}:80/Update_Parameter`, { 'AutoOnTime': onHourInput.value });} \r\n"
+    "        else {onHourInput.style.borderColor = 'red';}\r\n"
+    "       }\r\n"
+    "}\r\n"
+    "function handleOffTimeCheckboxChange() {let isChecked = document.getElementById('autoOffMode').checked;let offHourInput = document.getElementById('off_hour');if (isChecked) {\r\n"
+    "        const timePattern = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;\r\n"
+    "        if (timePattern.test(offHourInput.value)) { postData(`http://${clientIP}:80/Update_Parameter`, { 'AutoOffTime': offHourInput.value });} \r\n"
+    "        else {offHourInput.style.borderColor = 'red';}\r\n"
+    "        }\r\n"
+    "}\r\n"
+//    "function handleOffTimeCheckboxChange(){let isChecked = document.getElementById('autoOffTime').checked;postData(`http://${clientIP}:80/Update_Parameter`, { 'AutoOffTime': isChecked.toString() });}\r\n"
+
+//	"function handleAutoOnHourChange(){let OnHour = document.getElementById('OnHour').value;postData(`http://${clientIP}:80/Update_Parameter`, { 'OnHour': OnHour.toString() });}\r\n"
+//	"function handleAutoOffHourChange(){let OffHour = document.getElementById('OffHour').value;postData(`http://${clientIP}:80/Update_Parameter`, { 'OffHour': OffHour.toString() });}\r\n"
+
+	"function handleTemperatureChange(){let temperature = document.getElementById('temperatureSelect').value;postData(`http://${clientIP}:80/Update_Parameter`, { 'Temp': temperature.toString() });}\r\n"
+	"function updateProgress(e){const progressBarRect = progressBar.getBoundingClientRect();const offsetX = e.clientX - progressBarRect.left;const progressPercent = Math.max(0, Math.min(100, (offsetX / progressBarRect.width) * 100));\r\n"
+	"	progressBarFill.style.width = progressPercent + '%';\r\n"
+	"	progressBarFill.textContent = Math.round(progressPercent) + '%';}\r\n"
+	"function postProgress() {const progressValue = parseInt(progressBarFill.textContent, 10);postData(`http://${clientIP}:80/Update_Parameter`, { 'Speed': progressValue.toString() });}\r\n"
+	"function populateTemperatureSelect() {let select = document.getElementById('temperatureSelect');for (let i = 18; i < 30; i++) {let option = document.createElement('option');option.value = i;option.text = i + '°C';select.add(option);}}\r\n"
+
+	"function handleConnectionCheckboxChange(){let isChecked = document.getElementById('ConnectionByInternet').checked;postData(`http://${clientIP}:80/Update_Parameter`, { 'ConnectionByInternet': isChecked.toString() });}\r\n"
+"function handleCurrentTime() {\r\n"
+"    let CurrentTimeElement = document.getElementById('Current_Time');\r\n"
+"    let CurrentTime = CurrentTimeElement.textContent;\r\n"
+"    if (CurrentTime !== CurrentServerTime.toString()) {\r\n"
+"        postData(`http://${clientIP}:80/Update_Parameter`, { 'CurrentTime': CurrentServerTime.toString() });\r\n"
+//"			document.getElementById('Current_Time').textContent = CurrentServerTime;\r\n"
+"   } \r\n"
+"}\r\n"
+"function handleCurrentDate() {\r\n"
+
+"    let CurrentDateElement = document.getElementById('Current_Date');\r\n"
+"    let CurrentDate = CurrentDateElement.textContent;\r\n"
+
+
+"    if (CurrentDate !== CurrentServerDate.toString()) {\r\n"
+
+"        postData(`http://${clientIP}:80/Update_Parameter`, { 'CurrentDate': CurrentServerDate.toString() });\r\n"
+
+"   } \r\n"
+"}\r\n"
+
+
+	"function updateStatus() {\r\n"
+	"	var xhr = new XMLHttpRequest();\r\n"
+	"	xhr.open('POST', `http://${clientIP}:80/status`, true);\r\n"
+	"	xhr.setRequestHeader('Content-Type', 'application/json');\r\n"
+	"	xhr.onreadystatechange = function() {\r\n"
+	"		if (xhr.readyState === 4 && xhr.status === 200) {\r\n"
+	"			var statusData = JSON.parse(xhr.responseText);\r\n"
+	"			document.getElementById('Alarm_Sts').textContent = statusData.value1;\r\n"
+	"			document.getElementById('My_IP').textContent = statusData.value2;\r\n"
+	"			document.getElementById('Modem_IP').textContent = statusData.value3;\r\n"
+	"			document.getElementById('My_Mac').textContent = statusData.value4;\r\n"
+	"			document.getElementById('SSID_Con').textContent = statusData.value5;\r\n"
+	"			document.getElementById('Internet_Con').textContent = statusData.value6;\r\n"
+	"			document.getElementById('Server_Con').textContent = statusData.value7;\r\n"
+	"			document.getElementById('Last_Con').textContent = statusData.value8;\r\n"
+	"			document.getElementById('Temp').textContent = statusData.value9;\r\n"
+	"			document.getElementById('Current_Time').textContent = statusData.time;\r\n"
+	"			document.getElementById('Current_Date').textContent = statusData.date;\r\n"       
+	"			const temperatureSelect = document.getElementById('temperatureSelect');\r\n"
+	"			const progressBarFill = document.getElementById('progress-bar-fill');\r\n"
+	"			temperatureSelect.value = statusData.temperature;\r\n"
+	"			progressBarFill.style.width = statusData.progressBar + '%';\r\n"
+	"			progressBarFill.textContent = statusData.progressBar + '%';\r\n"
+//	"			const AutoOnHour = document.getElementById('on_hour');\r\n"
+//	"			const AutoOffHour = document.getElementById('off_hour');\r\n"
+//	"			AutoOnHour.value = statusData.AutoOnTime;\r\n"
+//	"			AutoOffHour.value= statusData.AutoOffTime;\r\n"
+	"		}\r\n"
+	"	};\r\n"
+	"	xhr.send();\r\n"
+	"}\r\n"
+
+	"async function fetchGlobalTime() {\r\n"
+	"	const servers = [\r\n"
+	"		'http://worldtimeapi.org/api/timezone/Asia/Tehran',\r\n"
+	"		'https://timeapi.io/api/TimeZone/zone?timeZone=Asia/Tehran'\r\n"
+	"	];\r\n"
+
+	"	let timeFetched = false;\r\n"
+
+	"	for (const server of servers) {\r\n"
+	"		try {\r\n"
+	"			const response = await fetch(server);\r\n"
+	"			if (!response.ok) {\r\n"
+	"				throw new Error(`خطا در دریافت زمان از سرور: ${server}`);\r\n"
+	"			}\r\n"
+	"			const data = await response.json();\r\n"
+
+	"			let dateTime;\r\n"
+	"			if (server.includes('worldtimeapi')) {\r\n"
+	"				dateTime = new Date(data.datetime);\r\n"
+	"			} else if (server.includes('timeapi.io')) {\r\n"
+	"				dateTime = new Date(data.currentLocalTime);\r\n"
+	"			}\r\n"
+
+	"			const options = { hour: '2-digit', minute: '2-digit', hour12: false };\r\n"
+	"			const timeString = dateTime.toLocaleTimeString('en-US', options);\r\n"
+	"			const dateString = dateTime.toLocaleDateString('en-US');\r\n"
+
+	"			CurrentServerTime = timeString;\r\n"
+	"			CurrentServerDate = dateString;\r\n"
+	"			timeFetched = true;\r\n"
+	"			return;\r\n"
+	"		} catch (error) {\r\n"
+	"			console.error(error);\r\n"
+	"		}\r\n"
+	"	}\r\n"
+
+	"	if (!timeFetched) {\r\n"
+	"		const localDateTime = new Date();\r\n"
+	"		const options = { hour: '2-digit', minute: '2-digit', hour12: false }; \r\n"
+	"		const localTimeString = localDateTime.toLocaleTimeString('en-US', options);\r\n"
+	"		const localDateString = localDateTime.toLocaleDateString('en-US'); \r\n"
+
+	"		CurrentServerTime = localTimeString;\r\n"
+	"		CurrentServerDate = localDateString;\r\n"
+	"	}\r\n"
+//    "   let CurrentTime = document.getElementById('Current_Time').textContent ;if(CurrentTime !== CurrentServerTime){postData(`http://${clientIP}:80/Update_Parameter`, { 'CurrentTime': CurrentServerTime.toString() });}\r\n"
+
+//    "   postData(`http://${clientIP}:80/Update_Parameter`, { 'CurrentTime': CurrentServerTime.toString() });\r\n"
+//    "   postData(`http://${clientIP}:80/Update_Parameter`, { 'CurrentDate': CurrentServerDate.toString() });\r\n"
+
+    "	handleCurrentTime();\r\n"
+//"	handleCurrentDate();\r\n"
+	"}\r\n"
+	"</script>\r\n"
+	"</div>\r\n"
+	"</body>\r\n"
+	"</html>\r\n"
+};
+
+const char *Settings_Page1 =
+{	
+    "<!DOCTYPE html>\r\n"
+    "<html lang='fa'>\r\n"
+    "<head>\r\n"
+    "<meta charset='UTF-8'>\r\n"
+    "<meta name='viewport' content='width=device-width, initial-scale=1.0'>\r\n"
+    "<title>Settings</title>\r\n"
+    "<style type='text/css'>\r\n"
+    "body {font: 100%/1.4 Tahoma, Geneva, sans-serif;background: #273965;margin: 0;padding: 0;color: #FFF;}\r\n"
+    ".container {width: 90%;max-width: 800px;min-width: 300px;background: #FFF;margin: 0 auto;padding: 20px;box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);border-radius: 12px;}\r\n"
+    ".header {width: 100%;background: #4f6d9f;text-align: center;color: #FFF;border-radius: 12px 12px 0 0;margin-bottom: 20px;}\r\n"
+    ".header h1 {margin: 0;padding: 20px;}\r\n"
+    ".content {font-size: 15px;text-align: center; color: #000;}\r\n"
+    ".form-group {margin-bottom: 15px; text-align: center;}\r\n"
+    ".form-group label {display: block;font-weight: bold;margin-bottom: 5px;}\r\n"
+    ".form-group input[type='text'], .form-group input[type='password'] {width: 90%;padding: 10px;border-radius: 12px;border: 1px solid #4CAF50;margin: 0 auto;text-align: left;}\r\n"
+    ".ip-input-group {display: flex;justify-content: center;gap: 5px;}\r\n"
+    ".ip-input-group input {width: 50px;text-align: center;}\r\n"
+    ".ip-container {display: flex;align-items: center;border: 1px solid #4CAF50;border-radius: 12px;padding: 10px;gap: 5px;width: 90%;margin: 0 auto;justify-content: center;}\r\n"
+    ".modem-ip-container {display: flex;align-items: center;border: 1px solid #4CAF50;border-radius: 12px;padding: 10px;gap: 5px;width: 90%;margin: 0 auto;justify-content: center;}\r\n"
+    ".form-container {border: 2px solid #4CAF50;padding: 20px;border-radius: 12px;text-align: center;}\r\n"
+    ".footer {padding: 10px 0;font-size: 12px;background: #4f6d9f;color: #FFF;text-align: center;border-radius: 0 0 12px 12px;margin-top: 20px;}\r\n"
+    "input[type='button'] {width: 48%;}\r\n"
+    "input[readonly] {text-align: center;}\r\n"
+    ".checkbox-container {display: flex;align-items: center;justify-content: center;}\r\n"
+    ".checkbox-container label {margin-right: 10px;}\r\n"
+
+    "</style>\r\n"
+    "</head>\r\n"
+    "<body onload='initializePage()'>\r\n"
+    "<div class='container'>\r\n"
+    "    <div class='header'>\r\n"
+    "        <h1>Settings</h1>\r\n"
+    "    </div>\r\n"
+    "    <div class='content'>\r\n"
+    "        <div class='form-container'>\r\n"
+    "            <div class='form-group'>\r\n"
+    "                <label for='ssid'>SSID:</label>\r\n"
+    "                <input type='text' id='ssid' name='ssid' maxlength='15' value='%DefSSIDxxxxxxx'>\r\n"
+    "            </div>\r\n"
+    "            <div class='form-group'>\r\n"
+    "                <label for='password'>Password:</label>\r\n"
+    "                <input type='password' id='password' name='password' maxlength='15' value='%DefPassxxxxxxx'>\r\n"
+    "            </div>\r\n"
+	"  			 <div class='form-group'>\r\n"//arab
+	" 	             <label for='wifi_password'>Wifi Password:</label>\r\n"//arab
+	"                <input type='password'  id='wifi_password' name='wifi_password' maxlength='15' value='%DefWifPasxxxxx'>\r\n"//arab
+	"            </div>\r\n"//arab
+    "            <div class='form-group'>\r\n"
+    "                <label for='ip'>IP:</label>\r\n"
+    "                <div class='ip-container'>\r\n"
+    "                    <input type='text' id='ip1' name='ip1' maxlength='3' value='%P0' oninput='validateIP(this)' style='width: 40px;'>\r\n"
+    "                    <span>.</span>\r\n"
+    "                    <input type='text' id='ip2' name='ip2' maxlength='3' value='%P1' oninput='validateIP(this)' style='width: 40px;'>\r\n"
+    "                    <span>.</span>\r\n"
+    "                    <input type='text' id='ip3' name='ip3' maxlength='3' value='%P2' oninput='validateIP(this)' style='width: 40px;'>\r\n"
+    "                    <span>.</span>\r\n"
+    "                    <input type='text' id='ip4' name='ip4' maxlength='3' value='%P3' oninput='validateIP(this)' style='width: 40px;'>\r\n"
+    "                </div>\r\n"
+    "            </div>\r\n"
+    "            <div class='checkbox-container'>\r\n"
+    "                <label for='dhcp'>DHCP:</label>\r\n"
+    "                <input type='checkbox' id='dhcp' name='dhcp' onchange='toggleDHCP()' %DefDHC '>\r\n"  //checked
+    "            </div>\r\n"
+    "            <div class='form-group'>\r\n"
+    "                <label for='MIp'>Modem IP:</label>\r\n"
+    "                <div class='modem-ip-container'>\r\n"
+    "                    <input type='text' id='MIp1' name='MIp1' maxlength='3' value='%M0' oninput='validateIP(this)' style='width: 40px;'>\r\n"
+    "                    <span>.</span>\r\n"
+    "                    <input type='text' id='MIp2' name='MIp2' maxlength='3' value='%M1' oninput='validateIP(this)' style='width: 40px;'>\r\n"
+    "                    <span>.</span>\r\n"
+    "                    <input type='text' id='MIp3' name='MIp3' maxlength='3' value='%M2' oninput='validateIP(this)' style='width: 40px;'>\r\n"
+    "                    <span>.</span>\r\n"
+    "                    <input type='text' id='MIp4' name='MIp4' maxlength='3' value='%M3' oninput='validateIP(this)' style='width: 40px;'>\r\n"
+    "                </div>\r\n"
+    "            </div>\r\n"
+
+ };
+const char *Settings_Page3 =
+{
+	"               <div class='form-group'>\r\n"
+    "              <label id='connectionStatus'>Status: Not Connected</label>\r\n"
+    "            </div>\r\n"
+    "            <div class='form-group'>\r\n"
+    "               <input type='button' value='Connection Test' onclick='connectionTest()'>\r\n"
+    "            </div>\r\n"
+    "            <div class='form-group'>\r\n"
+    "               <input type='button' value='Save' onclick='saveSettings()'>\r\n"
+    "            </div>\r\n"
+    "        </div>\r\n"
+    "    </div>\r\n"
+    "    <div class='footer'>\r\n"
+    "<center>Copyright &copy; 2024 <a style='color:#FFF;' href='http://www.nianelectronic.com'>Nian Electronic Co.</a>Prg-Ver:%Prg-Vern. </center>\r\n"
+    "    </div>\r\n"
+    "</div>\r\n"
+    "</body>\r\n"
+    "</html>\r\n"
+    "<script>\r\n"
+    "    var Sever_Setting_Active;\r\n"
+
+    " function postData(url, data) {return fetch(url, {method: 'POST',headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)}).then(response => response.json());}\r\n"
+
+    "function validateIP(input) { input.value = input.value.replace(/[^0-9]/g, '').slice(0, 3); }\r\n"
+    "function normalizeIP(ip) {return ip.split('.').map(octet => parseInt(octet, 10)).join('.');}\r\n"
+    
+    "let clientIP = '%H0.%H1.%H2.%H3';\r\n"
+    "clientIP = normalizeIP(clientIP);\r\n"
+    
+    "function trimEndSpaces(str) { return str.replace(/\\s+$/, ''); }\r\n"
+    "function initializePage() {\r\n"
+    "    var ssid = document.getElementById('ssid').value;\r\n"
+	"   document.getElementById('ssid').value = trimEndSpaces(ssid);\r\n"
+    "    var password = document.getElementById('password').value;\r\n"
+    "    document.getElementById('password').value = trimEndSpaces(password);\r\n"
+	"	var wifi_password = document.getElementById('wifi_password').value;\r\n"
+	"  	 document.getElementById('wifi_password').value = trimEndSpaces(wifi_password);\r\n"
+	"  	 toggleDHCP();\r\n"
+    " 	if(System.Sever_Setting_Active)\r\n"
+    "    {\r\n"
+    "        var Server_Port = document.getElementById('Server_Port').value;\r\n"
+    "    		document.getElementById('Server_Port').value = trimEndSpaces(Server_Port);\r\n"
+    "    	var Connection_Time = document.getElementById('Connection_Time').value;\r\n"
+    "    		document.getElementById('Connection_Time').value = trimEndSpaces(Connection_Time);\r\n"
+    "   		toggleS_EN();\r\n"
+    "   	} \r\n"
+    "}\r\n"
+    "function saveSettings() {\r\n"
+    "    var ssid = document.getElementById('ssid').value;\r\n"
+    "   ssid = trimEndSpaces(ssid);\r\n"
+    "    var password = document.getElementById('password').value;\r\n"
+    "    password = trimEndSpaces(password);\r\n"
+	"	var wifi_password = document.getElementById('wifi_password').value;\r\n"
+    "    wifi_password = trimEndSpaces(wifi_password);\r\n"
+    "    var ip1 = document.getElementById('ip1').value;\r\n"
+    "    var ip2 = document.getElementById('ip2').value;\r\n"
+    "    var ip3 = document.getElementById('ip3').value;\r\n"
+    "    var ip4 = document.getElementById('ip4').value;\r\n"
+    "    var MIp1 = document.getElementById('MIp1').value;\r\n"
+    "    var MIp2 = document.getElementById('MIp2').value;\r\n"
+    "    var MIp3 = document.getElementById('MIp3').value;\r\n"
+    "    var MIp4 = document.getElementById('MIp4').value;\r\n"
+    "    var dhcpEnabled = document.getElementById('dhcp').checked;\r\n"
+    "    if(System.Sever_Setting_Active)\r\n"
+    "    {\r\n"
+    "        var Server_Port = document.getElementById('Server_Port').value;\r\n"
+    "        Server_Port = trimEndSpaces(Server_Port);\r\n"
+    "        var Connection_Time = document.getElementById('Connection_Time').value;\r\n"
+    "        Connection_Time = trimEndSpaces(Connection_Time);\r\n"
+    "     	var Sip1 = document.getElementById('Sip1').value;\r\n"
+    "     	var Sip2 = document.getElementById('Sip2').value;\r\n"
+    "     	var Sip3 = document.getElementById('Sip3').value;\r\n"
+    "      	var Sip4 = document.getElementById('Sip4').value;\r\n"
+    "      	var ServerEN = document.getElementById('ServerEN').checked;\r\n"
+    "    }\r\n"
+    "   	if(System.Sever_Setting_Active){\r\n"
+    "    	    	var data = {\r\n"
+    "                'ssid': ssid,\r\n"
+    "                'password': password,\r\n"
+    "                'wifi_password': wifi_password,\r\n"
+    "    	        'dhcpEnabled': dhcpEnabled.toString(),\r\n"
+    "                'ip1': ip1,\r\n"
+    "                'ip2': ip2,\r\n"
+    "                'ip3': ip3,\r\n"
+    "                'ip4': ip4,\r\n"
+    "                'MIp1': MIp1,\r\n"
+    "                'MIp2': MIp2,\r\n"
+    "                'MIp3': MIp3,\r\n"
+    "                'MIp4': MIp4,\r\n"
+    "    	      'Server_Port': Server_Port,\r\n"
+    "               'Connection_Time': Connection_Time,\r\n"
+    "               'ServerEN': ServerEN.toString(),\r\n"
+    "               'Sip1': Sip1,\r\n"
+    "               'Sip2': Sip2,\r\n"
+    "               'Sip3': Sip3,\r\n"
+    "               'Sip4': Sip4\r\n"
+    "           };\r\n"
+    "   	}\r\n"
+    "   	else\r\n"
+    "   	{\r\n"
+    "    	    var data = {\r\n"
+    "                'ssid': ssid,\r\n"
+    "                'password': password,\r\n"
+    "    	        'wifi_password': wifi_password,\r\n"
+    "                'dhcpEnabled': dhcpEnabled.toString(),\r\n"
+    "                'ip1': ip1,\r\n"
+    "                'ip2': ip2,\r\n"
+    "                'ip3': ip3,\r\n"
+    "                'ip4': ip4,\r\n"
+    "                'MIp1': MIp1,\r\n"
+    "                'MIp2': MIp2,\r\n"
+    "                'MIp3': MIp3,\r\n"
+    "                'MIp4': MIp4\r\n"
+
+     "         };\r\n"
+     "      }\r\n"
+
+     "   console.log('Data to be sent:', data);\r\n"
+    
+     "   postData(`http://${clientIP}:80/Save_Setting`, data).then(data => {console.log('Success:', data);document.getElementById('connectionStatus').textContent = 'Status: ' + data.message;}).catch(error => {console.error('Error:', error);document.getElementById('connectionStatus').textContent = 'Status: Error';});}\r\n"
+    
+
+     "function connectionTest() {\r\n"
+     "   document.getElementById('connectionStatus').textContent = 'Status: Sending presskey...';\r\n"
+     "   postData(`http://${clientIP}:80/Save_Setting`, { command: 'presskey' }).then(data => {\r\n"
+     "       document.getElementById('connectionStatus').textContent = 'Status: Waiting for status...';\r\n"
+     "       setTimeout(function() {\r\n"
+     "           getStatus();\r\n"
+     "       }, 20000); \r\n"
+     "   }).catch(error => {\r\n"
+     "      console.error('Error:', error);\r\n"
+     "       document.getElementById('connectionStatus').textContent = 'Status: Failed to send presskey';\r\n"
+     "   });\r\n"
+     "}\r\n"
+     "function getStatus() {\r\n"
+     "   postData(`http://${clientIP}:80/Save_Setting`, { command: 'Press_Connect' }).then(data => {\r\n"
+     "       if (data.status === 'Success') {\r\n"
+     "           console.log('Success:', data);\r\n"
+     "           document.getElementById('connectionStatus').textContent = 'Status: ' + data.message;\r\n"
+     "       } else {\r\n"
+     "           document.getElementById('connectionStatus').textContent = 'Status: Failed to retrieve status';\r\n"
+     "       }\r\n"
+     "   }).catch(error => {\r\n"
+     "       console.error('Error:', error);\r\n"
+     "       document.getElementById('connectionStatus').textContent = 'Status: Error retrieving status';\r\n"
+     "   });\r\n"
+    "}\r\n"
+
+    "function toggleDHCP() {\r\n"
+    "    var isChecked = document.getElementById('dhcp').checked;\r\n"
+    "    var modemIpInputs = document.querySelectorAll('.modem-ip-container input');\r\n"
+    "    modemIpInputs.forEach(function(input) {\r\n"
+    "        input.readOnly = isChecked;\r\n"
+    "        input.style.backgroundColor = isChecked ? '#E0E0E0' : '#FFF';\r\n"
+    "    });\r\n"
+    "}\r\n"
+	
+	
+    "function toggleS_EN() {\r\n"
+    "    if (System.Sever_Setting_Active) {\r\n"
+    "        var isChecked = document.getElementById('ServerEN').checked;\r\n"
+    "        var modemIpInputs = document.querySelectorAll('.modem-ip-container input');\r\n"
+    "        modemIpInputs.forEach(function (input) {\r\n"
+    "            input.readOnly = isChecked;\r\n"
+    "            input.style.backgroundColor = isChecked ? '#E0E0E0' : '#FFF';\r\n"
+    "        });\r\n"
+    "    }\r\n"
+    "}\r\n"
+    "</script>\r\n"};
+const char *Settings_Page2 =
+{
+"           <div class='form-group'>\r\n"
+"               <label for='ip'>Server IP:</label>\r\n"
+"               <div class='ip-container'>\r\n"
+"                   <input type='text' id='Sip1' name='Sip1' maxlength='3' value='%S0' oninput='validateIP(this)' style='width: 40px;'>\r\n"
+"                   <span>.</span>\r\n"
+"                   <input type='text' id='Sip2' name='Sip2' maxlength='3' value='%S1' oninput='validateIP(this)' style='width: 40px;'>\r\n"
+"                   <span>.</span>\r\n"
+"                   <input type='text' id='Sip3' name='Sip3' maxlength='3' value='%S2' oninput='validateIP(this)' style='width: 40px;'>\r\n"
+"                   <span>.</span>\r\n"
+"                   <input type='text' id='Sip4' name='Sip4' maxlength='3' value='%S3' oninput='validateIP(this)' style='width: 40px;'>\r\n"
+"               </div>\r\n"
+"           </div>\r\n"
+"			<div class='form-group'>\r\n"
+"               <label for='Server_Port'>Server Port :</label>\r\n"
+"               <input type='text' id='Server_Port' name='Server_Port' maxlength='8' value='%Portxxx'>\r\n"
+"           </div>\r\n"
+"			<div class='form-group'>\r\n"
+"               <label for='Connection_Time'>Connection Time :</label>\r\n"
+"               <input type='text' id='Connection_Time' name='Connection_Time' maxlength='4' value='%Tim'>\r\n"
+"           </div>\r\n"
+"           <div class='checkbox-container'>\r\n"
+"				<label for='ServerEN'>Enable :</label>\r\n"
+"               <input type='checkbox' id='ServerEN' name='ServerEN' onchange='toggleS_EN()' %DefS_EN '>\r\n"
+"            </div>\r\n"};
